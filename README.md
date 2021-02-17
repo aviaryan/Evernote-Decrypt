@@ -1,12 +1,6 @@
 # Evernote Encrypted Notes Decryption
 
-All **credits** belong to [Lee Maguire](https://gist.github.com/gwire/0db858e055cc2bae953b435f5116aaa8).
-
-I had a hard time finding that script.
-
-My purpose with this repository is to present that script in a more usable format.
-
---------
+All **credits** belong to [Lee Maguire](https://gist.github.com/gwire/0db858e055cc2bae953b435f5116aaa8). I had a hard time finding that script. My purpose with this repository is to present that script in a more usable format.
 
 ## How to decrypt
 
@@ -14,14 +8,14 @@ My purpose with this repository is to present that script in a more usable forma
 
 Go to search box in Evernote. Click on "Add Search Option". Select "Contains". Then from the second dropdown list, select "Encryption".
 
-Select all notes and export to `.enex` format.
+Select all notes and export to `.enex` format. Let's call the file `encrypted.enex`.
 
 **Step 2:** Clone this repository and install dependencies. To do that, run the following commands.
 
 ```sh
 git clone https://github.com/aviaryan/Evernote-Decrypt.git
 cd Evernote-Decrypt
-brew install python pipenv
+brew install pipenv
 pipenv sync
 ```
 
