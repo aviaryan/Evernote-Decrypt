@@ -27,3 +27,16 @@ pipenv run python EnexDecrypt.py -p <password> < encrypted.enex > decrypted.enex
 ```
 
 **Step 4:** You now have a decrypted Enex file. You can import it back into Evernote to export it as HTML. Or you can use [this tool](https://github.com/wormi4ok/evernote2md) to convert the `decrypted.enex` file into markdown files.
+
+
+-----
+
+## Update Reamde
+
+New format
+
+```
+pipenv run python EnexDecrypt.py -p <password> < enc_jour.enex
+```
+
+Add an `-o` for output file.

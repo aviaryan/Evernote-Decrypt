@@ -45,31 +45,41 @@ for opt, arg in opts:
     password = arg
 
 input_text = "".join(sys.stdin)
-c = re.search(r"(?P<head>.*)(?P<crypt1><en-crypt .*>)(?P<b64>.*)(?P<crypt2></en-crypt>)(?P<tail>.*)", input_text, re.DOTALL)
+matches = 0
+f = open("dec_jour.enex", "w")
 
-if c:
-  bintxt = base64.b64decode(c.group('b64'))
-  salt = bintxt[4:20]
-  salthmac = bintxt[20:36]
-  iv = bintxt[36:52]
-  ciphertext = bintxt[52:-32]
-  body = bintxt[0:-32]
-  bodyhmac = bintxt[-32:]
 
-  ## use the password to generate a digest for the encrypted body
-  ## if it matches the existing digest we can assume the password is correct
-  keyhmac = PBKDF2(password, salthmac, iterations, hashlib.sha256).read(keylength/8)
-  testhmac = hmac.new(keyhmac, body, hashlib.sha256)
-  match_hmac = hmac.compare_digest(testhmac.digest(),bodyhmac)
+while True:
+  print 'looping'
+  c = re.search(r"(?P<head>.*)(?P<crypt1><en-crypt .*>)(?P<b64>.*)(?P<crypt2></en-crypt>)(?P<tail>.*)", input_text, re.DOTALL)
+  if c:
+    bintxt = base64.b64decode(c.group('b64'))
+    salt = bintxt[4:20]
+    salthmac = bintxt[20:36]
+    iv = bintxt[36:52]
+    ciphertext = bintxt[52:-32]
+    body = bintxt[0:-32]
+    bodyhmac = bintxt[-32:]
 
-  if match_hmac:
-    key = PBKDF2(password, salt, iterations, hashlib.sha256).read(keylength/8)
-    aes = AES.new(key, AES.MODE_CBC, iv)
-    plaintext = aes.decrypt(ciphertext)
-    sys.stdout.write( c.group('head') + plaintext + c.group('tail') )
+    ## use the password to generate a digest for the encrypted body
+    ## if it matches the existing digest we can assume the password is correct
+    keyhmac = PBKDF2(password, salthmac, iterations, hashlib.sha256).read(keylength/8)
+    testhmac = hmac.new(keyhmac, body, hashlib.sha256)
+    match_hmac = hmac.compare_digest(testhmac.digest(),bodyhmac)
+
+    if match_hmac:
+      key = PBKDF2(password, salt, iterations, hashlib.sha256).read(keylength/8)
+      aes = AES.new(key, AES.MODE_CBC, iv)
+      plaintext = aes.decrypt(ciphertext)
+      input_text = c.group('head') + plaintext + c.group('tail')
+      matches += 1
+      print matches
+    else:
+      break
   else:
-    sys.stdout.write( input_text )
-    sys.exit(1)
-else:
-  sys.stdout.write( input_text )
-sys.exit(0)
+    break
+
+f.write(input_text)
+f.close()
+
+sys.exit(0 if matches > 0 else 1)
