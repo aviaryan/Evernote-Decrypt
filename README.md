@@ -2,6 +2,8 @@
 
 All **credits** belong to [Lee Maguire](https://gist.github.com/gwire/0db858e055cc2bae953b435f5116aaa8). I had a hard time finding that script. My purpose with this repository is to present that script in a more usable format.
 
+**Update** - Added ability to decrypt an enex file with multiple encrypted blocks.
+
 ## How to decrypt
 
 **Step 1:** Export all encrypted notes by using the search option.
@@ -23,20 +25,8 @@ pipenv sync
 
 ```sh
 # <password> is your Evernote encryption password
-pipenv run python EnexDecrypt.py -p <password> < encrypted.enex > decrypted.enex
+# <output_file> is name of your decrypted enex file, let's call it decrypted.enex
+pipenv run python EnexDecrypt.py -p <password> -o <output_file> < encrypted.enex
 ```
 
 **Step 4:** You now have a decrypted Enex file. You can import it back into Evernote to export it as HTML. Or you can use [this tool](https://github.com/wormi4ok/evernote2md) to convert the `decrypted.enex` file into markdown files.
-
-
------
-
-## Update Reamde
-
-New format
-
-```
-pipenv run python EnexDecrypt.py -p <password> < enc_jour.enex
-```
-
-Add an `-o` for output file.

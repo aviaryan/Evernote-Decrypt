@@ -32,22 +32,23 @@ from pbkdf2 import PBKDF2
 from Crypto.Cipher import AES
 
 password = b'swordfish'  # It's the name of a fish
+output_file = 'decrypted.enex'
 
 keylength = 128
 iterations = 50000
 
-opts, args = getopt.getopt(sys.argv[1:],"hp:",["password="])
+opts, args = getopt.getopt(sys.argv[1:], "hp:o:", ["help", "password=", "output="])
 for opt, arg in opts:
   if opt == '-h':
-    print 'Usage: en-decrypt.py -p <password> < encrypted.enex > decrypted.enex'
+    print 'Usage: en-decrypt.py -p <password> -o <output-file> < encrypted.enex'
     sys.exit()
   elif opt in ("-p", "--password"):
     password = arg
+  elif opt in ("-o", "--output"):
+    output_file = arg
 
 input_text = "".join(sys.stdin)
 matches = 0
-f = open("dec_jour.enex", "w")
-
 
 while True:
   # re.search hangs if no match, so we do this check
@@ -82,6 +83,7 @@ while True:
   else:
     break
 
+f = open(output_file, "w")
 f.write(input_text)
 f.close()
 
