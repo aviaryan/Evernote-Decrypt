@@ -50,8 +50,11 @@ f = open("dec_jour.enex", "w")
 
 
 while True:
-  print 'looping'
-  c = re.search(r"(?P<head>.*)(?P<crypt1><en-crypt .*>)(?P<b64>.*)(?P<crypt2></en-crypt>)(?P<tail>.*)", input_text, re.DOTALL)
+  # re.search hangs if no match, so we do this check
+  # https://stackoverflow.com/questions/43310667/
+  c = None
+  if input_text.find('<en-crypt') > -1:
+    c = re.search(r"(?P<head>.*)(?P<crypt1><en-crypt .*>)(?P<b64>.*)(?P<crypt2></en-crypt>)(?P<tail>.*)", input_text, re.DOTALL)
   if c:
     bintxt = base64.b64decode(c.group('b64'))
     salt = bintxt[4:20]
@@ -73,7 +76,7 @@ while True:
       plaintext = aes.decrypt(ciphertext)
       input_text = c.group('head') + plaintext + c.group('tail')
       matches += 1
-      print matches
+      print 'Decrypted {} encryptions'.format(matches)
     else:
       break
   else:
