@@ -32,44 +32,59 @@ from pbkdf2 import PBKDF2
 from Crypto.Cipher import AES
 
 password = b'swordfish'  # It's the name of a fish
+output_file = 'decrypted.enex'
 
 keylength = 128
 iterations = 50000
 
-opts, args = getopt.getopt(sys.argv[1:],"hp:",["password="])
+opts, args = getopt.getopt(sys.argv[1:], "hp:o:", ["help", "password=", "output="])
 for opt, arg in opts:
   if opt == '-h':
-    print 'Usage: en-decrypt.py -p <password> < encrypted.enex > decrypted.enex'
+    print 'Usage: en-decrypt.py -p <password> -o <output-file> < encrypted.enex'
     sys.exit()
   elif opt in ("-p", "--password"):
     password = arg
+  elif opt in ("-o", "--output"):
+    output_file = arg
 
 input_text = "".join(sys.stdin)
-c = re.search(r"(?P<head>.*)(?P<crypt1><en-crypt .*>)(?P<b64>.*)(?P<crypt2></en-crypt>)(?P<tail>.*)", input_text, re.DOTALL)
+matches = 0
 
-if c:
-  bintxt = base64.b64decode(c.group('b64'))
-  salt = bintxt[4:20]
-  salthmac = bintxt[20:36]
-  iv = bintxt[36:52]
-  ciphertext = bintxt[52:-32]
-  body = bintxt[0:-32]
-  bodyhmac = bintxt[-32:]
+while True:
+  # re.search hangs if no match, so we do this check
+  # https://stackoverflow.com/questions/43310667/
+  c = None
+  if input_text.find('<en-crypt') > -1:
+    c = re.search(r"(?P<head>.*)(?P<crypt1><en-crypt .*>)(?P<b64>.*)(?P<crypt2></en-crypt>)(?P<tail>.*)", input_text, re.DOTALL)
+  if c:
+    bintxt = base64.b64decode(c.group('b64'))
+    salt = bintxt[4:20]
+    salthmac = bintxt[20:36]
+    iv = bintxt[36:52]
+    ciphertext = bintxt[52:-32]
+    body = bintxt[0:-32]
+    bodyhmac = bintxt[-32:]
 
-  ## use the password to generate a digest for the encrypted body
-  ## if it matches the existing digest we can assume the password is correct
-  keyhmac = PBKDF2(password, salthmac, iterations, hashlib.sha256).read(keylength/8)
-  testhmac = hmac.new(keyhmac, body, hashlib.sha256)
-  match_hmac = hmac.compare_digest(testhmac.digest(),bodyhmac)
+    ## use the password to generate a digest for the encrypted body
+    ## if it matches the existing digest we can assume the password is correct
+    keyhmac = PBKDF2(password, salthmac, iterations, hashlib.sha256).read(keylength/8)
+    testhmac = hmac.new(keyhmac, body, hashlib.sha256)
+    match_hmac = hmac.compare_digest(testhmac.digest(),bodyhmac)
 
-  if match_hmac:
-    key = PBKDF2(password, salt, iterations, hashlib.sha256).read(keylength/8)
-    aes = AES.new(key, AES.MODE_CBC, iv)
-    plaintext = aes.decrypt(ciphertext)
-    sys.stdout.write( c.group('head') + plaintext + c.group('tail') )
+    if match_hmac:
+      key = PBKDF2(password, salt, iterations, hashlib.sha256).read(keylength/8)
+      aes = AES.new(key, AES.MODE_CBC, iv)
+      plaintext = aes.decrypt(ciphertext)
+      input_text = c.group('head') + plaintext + c.group('tail')
+      matches += 1
+      print 'Decrypted {} encryptions'.format(matches)
+    else:
+      break
   else:
-    sys.stdout.write( input_text )
-    sys.exit(1)
-else:
-  sys.stdout.write( input_text )
-sys.exit(0)
+    break
+
+f = open(output_file, "w")
+f.write(input_text)
+f.close()
+
+sys.exit(0 if matches > 0 else 1)
